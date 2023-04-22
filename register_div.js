@@ -46,11 +46,11 @@ function checkLength(o, n, min, max) {
 function addUser() {
     if (validateUsersDetails()) {
         alert("Registration Successfull");
-        $("#users tbody").append("<tr>" +
-            "<td>" + document.getElementById("Username").value + "</td>" +
-            "<td>" + document.getElementById("email").value + "</td>" +
-            "<td>" + document.getElementById("birthday").value + "</td>" +
-            "</tr>");
+        // $("#users tbody").append("<tr>" +
+        //     "<td>" + document.getElementById("Username").value + "</td>" +
+        //     "<td>" + document.getElementById("email").value + "</td>" +
+        //     "<td>" + document.getElementById("birthday").value + "</td>" +
+        //     "</tr>");
 
         var newUser = {
             myName : document.getElementById("name").value,
