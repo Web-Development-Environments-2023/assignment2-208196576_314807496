@@ -27,5 +27,6 @@ function click_on_outter_window(event){
 function click_escape(key){
     if(key.which == 27){
         about_div.style.display = "none";
+        welcome()
     }
 }
