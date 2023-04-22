@@ -8,19 +8,19 @@
     <meta charset="utf-8">
     <title>Cannon Game</title>
     <link rel="stylesheet" type="text/css" href="style.css"/>
+
     <script src="jquery-1.10.2.min.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 
-
     <script src="cannon.js"></script>
+    <script type="text/javascript" src=divManager.js></script>
 
-    <script type="text/javascript" src=login_div.js></script>
-    <script type="text/javascript" src=register_div.js></script>
+
 </head>
 
 <body onload="welcome()">
 <canvas id="info-canvas"></canvas>
-
+<canvas id="theCanvas"></canvas>
 
 <!--menu-->
 <header class="menu" >
@@ -36,17 +36,18 @@
 </header>
 
 <!--welcome-->
-<div id="welcome" class="welcome_div" >
+<div id="welcome_div" class="welcome_div" >
    <img src="canon_logo.png" alt="canon_logo"  class="welcome" width="120" height="50">
    <button class="welcome-buttons" style="vertical-align: middle" href="#" onclick="openRegisterWindow()">Register</button>
    <p></p>
    <button class="welcome-buttons" style="vertical-align: middle" href="#" onclick="showDiv('login_div')" >Login</button>
+   <button class="StartGameButton" id="StartGameAgain" visibility = 'hidden' onclick="showDiv('custom_settings')">Start Game</button>
 </div>
 
 <!--register-->
 
-<div id="register" class="main-div">
-
+<div id="register_div" class="main-div">
+    <script type="text/javascript" src=register_div.js></script>
 
     <body id="dialog-form-body">
     <div id="dialog-form" title="Register"
@@ -55,7 +56,7 @@
         </p>
         <form>
             <fieldset>
-                <label for="name">Name</label>
+                <label for="MyName">Name</label>
                 <input type="text" name="name" id="name" placeholder="israel israeli" class="register fields">
 
                 <label for="email">Email</label>
@@ -71,20 +72,21 @@
                 <label for="Username">Username</label>
                 <input type="text" name="Username" id="Username" placeholder="israelIsraeli" class="register fields">
 
-                <label for="date">Date of Birth</label>
-                <input type="date" name="date" id="date" placeholder="Date of Birth" class="register fields">
+                <label for="birthday">Date of Birth</label>
+                <input type="date" name="date" id="birthday" placeholder="Date of Birth" class="register fields">
 
 
             </fieldset>
         </form>
     </div>
 
-    <button  class="welcome-buttons" onclick="openRegisterWindow()">Register</button>
+    <button  class="welcome-buttons" onclick="addUser()">Register</button>
     </body>
 </div>
 
 <!--login-->
 <div id="login_div" class="main-div">
+    <script type="text/javascript" src=login_div.js></script>
     <form class="form style-9">
         <h1>Log In</h1>
         <ul>
@@ -102,15 +104,36 @@
     </form>
 </div>
 
+<!--settings-->
+<div id="custom_settings" class="main-div">
+    <script type="text/javascript" src=settings_div.js></script>
+    <form class="form style-9">
+        <h1>Settings</h1>
+        <ul>
+            <li>
+                <label for="shootingKey">shootingKey</label>
+                <input type="text" name="shootingKey" id="shooting_Key" placeholder="please enter shooting key" class="settings">
+            </li>
+            <li>
+                <label for="timeToPlay">timeToPlay</label>
+                <input type="text" name="timeToPlay" id="time_to_play" placeholder="please enter how much time you want to play in seconds" class="settings">
+            </li>
+            <li>
+                <input type="button" id=keyChosen value="StartGame" onclick="chooseKey()"/>
+            </li>
+        </ul>
+    </form>
+</div>
+
 
 <!--about-->
-<div id="about" class="about_div">
+<div id="about_div" class="about_div">
     <script type="text/javascript" src="about_div.js"></script>
     <div class="about">
         <span  class="closeSpan">&times;</span>
         <p>
             <br>
-            <b><i class="fas fa-angle-double-right"></i> Submitters name: </b> Ofir Belanky and Liron Zvi
+            <b><i class="fas fa-angle-double-right"></i> Submitters name: </b> Ofir Belenky and Liron Zvi
             <br>
             On this game we used JQuery Plugin for register and about section.
             <br>
@@ -121,13 +144,31 @@
 
 
 <!--endScreean -->
-<div id="gameOver" class="gameOver">
-    <script type="text/javascript" src="\"></script>
+<div id="gameOver" class="main-div">
+    <script src="endScreen_div.js"></script>
     <div class="gameOver-content">
-        <img src="gameOver.jpg" id="game-over" width="50%" height="50%" style= "margin-left:12%" >
-        <p id="message"></p>
-        <button  type="button" class="welcome-buttons" id="play_again" onclick="showDiv('settings')">Play Again</button>
+        <img src="gameOver.jpg" id="game-over" width="100%" height="50%">
+        <button  type="button" class="welcome-buttons" id="play_again" top="0" left="0" width="25%" height = "50%"  onclick="showDiv('custom_settings')">Play Again</button>
+        <button  type="button" class="welcome-buttons" id="highscore" onclick="ShoHighScore()">HighScore</button>
     </div>
+</div>
+
+<!--endScreean -->
+<div id="game_div" class="main-div">
+    <script type="text/javascript" src="cannon.js"></script>
+    <div class="gameOver-content">
+        <img src="gameOver.jpg" id="game-over" >
+        <p id="message"></p>
+        <button  type="button" class="welcome-buttons" id="play_again1" onclick="showDiv('custom_settings')">Play Again</button>
+        <button  type="button" class="welcome-buttons" id="highscore" onclick="ShowHighScore()">HighScore</button>
+    </div>
+</div>
+
+<div id="highScore_div" class="main-div">
+    <h1 id = "curr_location"></h1>
+    <ul id="myList">
+    </ul>
+    <button  type="button" class="welcome-buttons" id="goback" onclick="showDiv('custom_settings')">Go Back</button>
 </div>
 
 
@@ -135,18 +176,17 @@
     <source src="blocker_hit.ogg" type="audio/ogg">
 </audio>
 <audio id="targetSound" preload="auto">
-    <source src="target_hit.ogg" type="audio/ogg">
+    <source src="enemyShoted.mp3">
 </audio>
 <audio id="cannonSound" preload="auto">
-    <source src="cannon_fire.ogg" type="audio/ogg">
+    <source src="canonFire.mp3">
 </audio>
-<canvas id="theCanvas" width="480" height="600"></canvas>
-<p><input id="startButton" type="button" value="Start Game">
-</p>
+<audio id="soundTrack" preload="auto">
+    <source src="pirates_music.mp3">
+</audio>
 </body>
-
-<div class="footer_div" id="footer">
-    <p>Canon Game - Halaliot ------------ Created by Ofir Blanky and Liron Zvi ------------ ofirbel@post.bgu.ac.il
+<div class="footer" id="footer">
+    <p>Canon Game - Halaliot ------------ Created by Ofir Belenky and Liron Zvi ------------ ofirbel@post.bgu.ac.il
         --------- lironzv@post.bgu.ac.il</p>
 </div>
 

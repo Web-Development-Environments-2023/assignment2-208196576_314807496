@@ -87,7 +87,7 @@ header .by:hover{
 }
 button{
     color: black;
-    font-size: 30px;
+    font-size: 20px;
     top:50%;
 
     cursor: pointer;
@@ -343,33 +343,31 @@ table.settingtable, .setting-input{
 
 /***GAME OVER***/
 .gameOver{
-    display: none; /* Hidden by default */
-    position: fixed;
-    color: blanchedalmond;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    display: flex;
+    align-items: center;
+    visibility: hidden;
+    justify-content: center;
 }
 .gameOver-content{
     background-color: #393939;
+    position: fixed;
     margin: auto;
     margin-top: 7%;
-    padding: 30px;
+    padding: 10px;
     width: 35%;
     border-radius: 30px;
 
 }
 .gameOver-content p{
     font-family: Calibri;
-    font-size: 30px;
+    font-size: 10px;
     color: #ffea00;
     text-align: center;
+    position: fixed;
 }
 
 .gameOver button{
-    margin-left: 30%;
+    display: flex;
 }
 
 .footer {
@@ -384,4 +382,24 @@ table.settingtable, .setting-input{
     margin-top: -45px;
     font-size: 12px;
 
+}
+StartGameButton{
+    color: black;
+    font-size: 20px;
+    top:50%;
+
+    cursor: pointer;
+    position: relative;
+    padding:15px 32px;
+    border-radius: 3.75rem;
+    line-height: 2.5rem;
+    font-weight: 600;
+
+    border: 0.5px solid #012880;
+    background-image: linear-gradient(-180deg, #ffeb89 0%, #fff800 100%);
+    box-shadow: 5px 10px  1.25rem 0 rgba(22,75,195,0.50),
+    0 -0.25rem 1.5rem rgb(155, 132, 15) inset,
+    0 0.75rem 0.5rem rgba(255,255,255, 0.4) inset,
+    0 0.25rem 0.5rem 0 rgb(207, 168, 70) inset;
+    visibility: hidden;
 }

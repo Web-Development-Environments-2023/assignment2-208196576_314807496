@@ -5,16 +5,14 @@ document.addEventListener('DOMContentLoaded', function (event) {
 
     game_over =document.getElementById('gameOver');
 
-    play_again= document.getElementsByClassName("play_again")[0];
+    play_again= document.getElementById("play_again");
 
-    play_again.addEventListener("click", Start);
+    //play_again.addEventListener("click", newGame);
 });
 
 function showGameOver() {
     game_over.style.display = "block";
-    window.clearInterval(interval);
-    window.clearInterval(ghost_interval);
-    interval.clearInterval();
+    window.clearInterval(intervalTimer);
 }
 
 function GameOverMessage() {

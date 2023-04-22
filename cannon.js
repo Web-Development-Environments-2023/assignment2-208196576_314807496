@@ -23,6 +23,7 @@ var blockerBeginning; // blocker distance from top
 var blockerEnd; // blocker bottom edge distance from top
 var initialBlockerVelocity; // initial blocker speed multiplier
 var blockerVelocity; // blocker speed multiplier during game
+var highScoreArray;
 
 var target; // start and end points of the target
 var targetDistance; // target distance from left
@@ -47,6 +48,10 @@ var cannonLength; // cannon barrel length
 var barrelEnd; // the end point of the cannon's barrel
 var canvasWidth; // width of the canvas
 var canvasHeight; // height of the canvas
+var chickenArray = new Array(); // array of chickens
+var enemyCanonBall = new Array();
+var points;
+var loses;
 
 // variables for sounds
 var targetSound;
@@ -56,16 +61,15 @@ var blockerSound;
 // called when the app first launches
 function setupGame()
 {
+   highScoreArray = new Array();
    // stop timer if document unload event occurs
    document.addEventListener( "unload", stopTimer, false );
 
    // get the canvas, its context and setup its click event handler
    canvas = document.getElementById( "theCanvas" );
    context = canvas.getContext("2d");
+   enemyCanShoot = true
 
-   // start a new game when user clicks Start Game button
-   document.getElementById( "startButton" ).addEventListener( 
-      "click", newGame, false );
 
    // JavaScript Object representing game items
    blocker = new Object(); // object representing blocker line
@@ -76,6 +80,7 @@ function setupGame()
    target.end = new Object(); // will hold x-y coords of line end
    cannonball = new Object(); // object representing cannonball point
    barrelEnd = new Object(); // object representing end of cannon barrel
+   var player;
 
    // initialize hitStates as an array
    hitStates = new Array(TARGET_PIECES);
@@ -98,68 +103,94 @@ function stopTimer()
 {
    canvas.removeEventListener( "click", fireCannonball, false );
    window.clearInterval( intervalTimer );
+   context.clearRect(0, 0, canvas.width, canvas.height);
 } // end function stopTimer
 
 // called by function newGame to scale the size of the game elements
 // relative to the size of the canvas before the game begins
 function resetElements()
 {
-   var w = canvas.width;
-   var h = canvas.height;
-   canvasWidth = w; // store the width
-   canvasHeight = h; // store the height
-   cannonBaseRadius = h / 18; // cannon base radius 1/18 canvas height
-   cannonLength = w / 8; // cannon length 1/8 canvas width
-
-   cannonballRadius = w / 36; // cannonball radius 1/36 canvas width
-   cannonballSpeed = w * 3 / 2; // cannonball speed multiplier
-
-   lineWidth = w / 24; // target and blocker 1/24 canvas width
-
-   // configure instance variables related to the blocker
-   blockerDistance = w * 5 / 8; // blocker 5/8 canvas width from left
-   blockerBeginning = h / 8; // distance from top 1/8 canvas height
-   blockerEnd = h * 3 / 8; // distance from top 3/8 canvas height
-   initialBlockerVelocity = h / 2; // initial blocker speed multiplier
-   blocker.start.x = blockerDistance;
-   blocker.start.y = blockerBeginning;
-   blocker.end.x = blockerDistance;
-   blocker.end.y = blockerEnd;
-
-   // configure instance variables related to the target
-   targetDistance = w * 7 / 8; // target 7/8 canvas width from left
-   targetBeginning = h / 8; // distance from top 1/8 canvas height
-   targetEnd = h * 7 / 8; // distance from top 7/8 canvas height
-   pieceLength = (targetEnd - targetBeginning) / TARGET_PIECES;
-   initialTargetVelocity = -h / 4; // initial target speed multiplier
-   target.start.x = targetDistance;
-   target.start.y = targetBeginning;
-   target.end.x = targetDistance;
-   target.end.y = targetEnd;
-
-   // end point of the cannon's barrel initially points horizontally
-   barrelEnd.x = cannonLength;
-   barrelEnd.y = h / 2;
+   var img = new Image();
+   var chicken;
+   chickenArray = new Array();
+   img.src = "chicken.png";
+   img.onload = function() {
+   for (var i = 0; i < 4; i++) {
+      for (var j = 0; j < 5; j++) {
+         chicken = {
+            width: j * (canvas.width / 5),
+            height: i * (canvas.height / 8)+25,
+            dead : 0
+         };
+         chickenArray.push(chicken)
+         context.drawImage(img, chicken.width, chicken.height, canvas.width / 20, canvas.height / 20);
+      }
+    }
+  };
+  player = {
+   width: canvas.width / 2, //middle of the screen
+   height: canvas.height- canvasHeight/20 // start at the lowest point
+  }
+  var img1 = new Image();
+  img1.src = "player.png"
+  context.drawImage(img1, player.width, player.height, canvas.width / 20, canvas.height / 20);
+   
 } // end function resetElements
 
 // reset all the screen elements and start a new game
 function newGame()
 {
+   var startGameAgain = document.getElementById('StartGameAgain');
+   startGameAgain.style.visibility = "visible"
+   points = 0;
+   loses = 0;
+   canvas.style.width = "100%";
+   canvas.style.height = "100%";
+   canvas.style.visibility = "visible";
+   canvasHeight = canvas.height
+   canvasWidth = canvas.w
+   context = canvas.getContext("2d");
+   cannonballRadius = canvasHeight / 30
    resetElements(); // reinitialize all game elements
    stopTimer(); // terminate previous interval timer
+   document.getElementById("soundTrack").play();
 
    // set every element of hitStates to false--restores target pieces
    for (var i = 0; i < TARGET_PIECES; ++i)
       hitStates[i] = false; // target piece not destroyed
 
    targetPiecesHit = 0; // no target pieces have been hit
-   blockerVelocity = initialBlockerVelocity; // set initial velocity
-   targetVelocity = initialTargetVelocity; // set initial velocity
-   timeLeft = 10; // start the countdown at 10 seconds
+   blockerVelocity = canvas.width/30; // set initial velocity
+   targetVelocity = canvas.width/30; // set initial velocity
+   cannonballVelocityY = -canvasHeight/6;
+   timeLeft = Math.max(120,playing_time); // start the countdown at 10 seconds
    timerCount = 0; // the timer has fired 0 times so far
    cannonballOnScreen = false; // the cannonball is not on the screen
    shotsFired = 0; // set the initial number of shots fired
    timeElapsed = 0; // set the time elapsed to zero
+   document.addEventListener('keydown', function(event) {
+      switch (event.key) {
+        case 'ArrowLeft':
+          // Left pressed
+          player.width = Math.max(0,player.width-canvas.width/20)
+          break;
+        case 'ArrowRight':
+          // Right pressed
+          player.width = Math.min(canvas.width-canvas.width / 20,player.width + canvas.width/20)
+          break;
+        case 'ArrowUp':
+          // Up pressed
+          player.height = Math.max(chickenArray[chickenArray.length-1].height+(canvas.height / 20)+(canvas.height / 20),player.height-canvas.height/20)
+          break;
+        case 'ArrowDown':
+          // Down pressed
+          player.height = Math.min(canvas.height-canvas.height / 20,player.height + canvas.height/20)
+          break;
+      }
+      if (event.key == shooting_key){
+         fireCannonball()
+      }
+    });
 
    startTimer(); // starts the game loop
 } // end function newGame
@@ -174,81 +205,129 @@ function updatePositions()
 
    // update the target's position
    var targetUpdate = TIME_INTERVAL / 1000.0 * targetVelocity;
-   target.start.y += targetUpdate;
-   target.end.y += targetUpdate;
+   chickenArray.forEach(element => {
+      element.width += targetUpdate
+   });
 
    // if the blocker hit the top or bottom, reverse direction
    if (blocker.start.y < 0 || blocker.end.y > canvasHeight)
       blockerVelocity *= -1;
 
    // if the target hit the top or bottom, reverse direction
-   if (target.start.y < 0 || target.end.y > canvasHeight)
+   if (chickenArray[0].width <= 0 || chickenArray[chickenArray.length - 1].width >= canvas.width - canvas.width / 20)
       targetVelocity *= -1;
+   
+   var interval = TIME_INTERVAL / 1000.0;
+   // update enemyballs locations
+   enemyCanonBall.forEach(element=> {
+      element.y -= interval * cannonballVelocityY; // same speed as player canonBall but different direction
+   })
 
    if (cannonballOnScreen) // if there is currently a shot fired
    {
       // update cannonball position
-      var interval = TIME_INTERVAL / 1000.0;
-
       cannonball.x += interval * cannonballVelocityX;
       cannonball.y += interval * cannonballVelocityY;
 
-      // check for collision with blocker
-      if ( cannonballVelocityX > 0 && 
-         cannonball.x + cannonballRadius >= blockerDistance &&
-         cannonball.x + cannonballRadius <= blockerDistance + lineWidth &&
-         cannonball.y - cannonballRadius > blocker.start.y &&
-         cannonball.y + cannonballRadius < blocker.end.y)
-      {
-         blockerSound.play(); // play blocker hit sound
-         cannonballVelocityX *= -1; // reverse cannonball's direction
-         timeLeft -= MISS_PENALTY; // penalize the user
-      } // end if
-
-      // check for collisions with left and right walls
-      else if (cannonball.x + cannonballRadius > canvasWidth || 
-         cannonball.x - cannonballRadius < 0)
-      {
-         cannonballOnScreen = false; // remove cannonball from screen
-      } // end else if
-
       // check for collisions with top and bottom walls
-      else if (cannonball.y + cannonballRadius > canvasHeight || 
+      if (cannonball.y + cannonballRadius > canvasHeight || 
          cannonball.y - cannonballRadius < 0)
       {
          cannonballOnScreen = false; // make the cannonball disappear
       } // end else if
 
-      // check for cannonball collision with target
-      else if (cannonballVelocityX > 0 && 
-         cannonball.x + cannonballRadius >= targetDistance &&
-         cannonball.x + cannonballRadius <= targetDistance + lineWidth &&
-         cannonball.y - cannonballRadius > target.start.y &&
-         cannonball.y + cannonballRadius < target.end.y)
-      {
-         // determine target section number (0 is the top)
-         var section = 
-            Math.floor((cannonball.y  - target.start.y) / pieceLength);
-
-         // check whether the piece hasn't been hit yet
-         if ((section >= 0 && section < TARGET_PIECES) && 
-            !hitStates[section])
-         {
-            targetSound.play(); // play target hit sound
-            hitStates[section] = true; // section was hit
-            cannonballOnScreen = false; // remove cannonball
-            timeLeft += HIT_REWARD; // add reward to remaining time
-
-            // if all pieces have been hit
-            if (++targetPiecesHit == TARGET_PIECES)
-            {
-               stopTimer(); // game over so stop the interval timer
-               draw(); // draw the game pieces one final time
-               showGameOverDialog("You Won!"); // show winning dialog
-            } // end if
-         } // end if
-      } // end else if
+      //check ball collision with chicken
+      for (var i=0;i<chickenArray.length;i++){
+         if(chickenArray[i].dead == 0 && cannonballOnScreen){
+            var alphaX = Math.abs(chickenArray[i].width-cannonball.x);
+            var alphaY = Math.abs(chickenArray[i].height-cannonball.y)
+            if(alphaX<= cannonballRadius + canvas.width / 20 && alphaY <= cannonballRadius + canvas.height / 20){
+               document.getElementById("targetSound").play();
+               chickenArray[i].dead = 1;
+               if(i<5){
+                  points += 20;
+               }
+               else if(i>=5 && i< 10){
+                  points += 15
+               }
+               else if(i>=10 && i< 15){
+                  points += 10
+               }
+               else if(i>=15){
+                  points += 5
+               }
+               cannonballOnScreen = false;
+            }
+         }
+      }
    } // end if
+   // create enemy balls
+   if(enemyCanonBall.length ==0){ // if no balls we create first with random chicken location
+      let created = false;
+      while(!created){
+         let randomlocation = Math.floor(Math.random()*(chickenArray.length-1));
+         if(chickenArray[randomlocation].dead == 0){
+            created = true;
+            let ball = {
+               x: Math.max(cannonballRadius,chickenArray[randomlocation].width),
+               y: chickenArray[randomlocation].height
+            }
+            enemyCanonBall.push(ball)
+         }
+      }
+   }
+   else if(enemyCanonBall.length>=1){
+      if(enemyCanonBall[0].y >= canvas*0.75){ // if the ball moved more the 75 percent of the canvas we can create another one
+         created = false;
+         while(!created){
+            let randomlocation = Math.floor(Math.random()*chickenArray.length-1);
+            if(chickenArray[randomlocation].dead == 0){
+               created = true;
+               let ball = {
+                  x: Math.max(cannonballRadius,chickenArray[randomlocation].width),
+                  y: chickenArray[randomlocation].height
+               }
+               enemyCanonBall.push(ball)
+            }
+         }
+      }
+   }
+   // remove enemy canon balls after leaving canvas
+   enemyCanonBall.forEach((element,index) => {
+      if(element.y >= canvas.height){
+         enemyCanonBall.splice(index,1)
+      }
+   })
+
+   // check enemy canon balls colision with ship
+
+   enemyCanonBall.forEach((element,index)=> {
+      var alphaX = Math.abs(player.width-element.x);
+      var alphaY = Math.abs(player.height-element.y)
+      if(alphaX<= cannonballRadius + canvas.width / 20 && alphaY <= cannonballRadius + canvas.height / 20){
+         document.getElementById("blockerSound").play();
+         loses += 1
+         if(loses == 3){
+            gameOver();
+         }
+         player = {
+            width: canvas.width / 2, //middle of the screen
+            height: canvas.height- canvasHeight/20 // start at the lowest point
+         }
+         enemyCanonBall.splice(index,1)
+      }
+   })
+   //check if winner
+   let allDead = true;
+      chickenArray.forEach(element => {
+         if (element.dead == 0){
+            allDead = false;
+         }
+      })
+      if(allDead){
+         gameOver();
+      }
+
 
    ++timerCount; // increment the timer event counter
 
@@ -257,6 +336,15 @@ function updatePositions()
    {
       --timeLeft; // decrement the timer
       ++timeElapsed; // increment the time elapsed
+      if(timeElapsed == 5 || timeElapsed == 10 || timeElapsed == 15 || timeElapsed == 20){
+         if (targetVelocity > 0){
+            targetVelocity += canvas.width/15
+         }
+         else{
+            targetVelocity -= canvas.width/15
+         }
+         cannonballVelocityY -= canvas.height/20
+      }
       timerCount = 0; // reset the count
    } // end if
 
@@ -271,133 +359,122 @@ function updatePositions()
 } // end function updatePositions
 
 // fires a cannonball
-function fireCannonball(event)
+function fireCannonball()
 {
    if (cannonballOnScreen) // if a cannonball is already on the screen
       return; // do nothing
 
-   var angle = alignCannon(event); // get the cannon barrel's angle
-
    // move the cannonball to be inside the cannon
-   cannonball.x = cannonballRadius; // align x-coordinate with cannon
-   cannonball.y = canvasHeight / 2; // centers ball vertically
+   cannonball.x = player.width; // align x-coordinate with cannon
+   cannonball.y = player.height; // centers ball vertically
+   document.getElementById("cannonSound").play();
 
    // get the x component of the total velocity
-   cannonballVelocityX = (cannonballSpeed * Math.sin(angle)).toFixed(0);
+   cannonballVelocityX = 0;
 
    // get the y component of the total velocity
-   cannonballVelocityY = (-cannonballSpeed * Math.cos(angle)).toFixed(0);
    cannonballOnScreen = true; // the cannonball is on the screen
    ++shotsFired; // increment shotsFired
 
-   // play cannon fired sound
-   cannonSound.play();
+   //t play cannon fired sound
+   //tcannonSound.play();
 } // end function fireCannonball
 
-// aligns the cannon in response to a mouse click
-function alignCannon(event)
-{
-   // get the location of the click 
-   var clickPoint = new Object();
-   clickPoint.x = event.clientX;
-   clickPoint.y = event.clientY;
-
-   // compute the click's distance from center of the screen
-   // on the y-axis
-   var centerMinusY = (canvasHeight / 2 - clickPoint.y);
-
-   var angle = 0; // initialize angle to 0
-
-   // calculate the angle the barrel makes with the horizontal
-   if (centerMinusY !== 0) // prevent division by 0
-      angle = Math.atan(clickPoint.x / centerMinusY);
-
-   // if the click is on the lower half of the screen
-   if (clickPoint.y > canvasHeight / 2)
-      angle += Math.PI; // adjust the angle
-
-   // calculate the end point of the cannon's barrel
-   barrelEnd.x = (cannonLength * Math.sin(angle)).toFixed(0);
-   barrelEnd.y = 
-      (-cannonLength * Math.cos(angle) + canvasHeight / 2).toFixed(0);
-
-   return angle; // return the computed angle
-} // end function alignCannon
 
 // draws the game elements to the given Canvas
 function draw()
 {
-   canvas.width = canvas.width; // clears the canvas (from W3C docs)
+   context.clearRect(0, 0, canvas.width, canvas.height);
 
-   // display time remaining
+   // display time remaining and score
    context.fillStyle = "black";
-   context.font = "bold 24px serif";
+   context.font = "bold 8px serif";
    context.textBaseline = "top";
-   context.fillText("Time remaining: " + timeLeft, 5, 5);
-
-   // if a cannonball is currently on the screen, draw it
+   context.fillText("Time remaining: " + timeLeft,0,0);
+   context.fillText("Score:" + points,0,8)
+   context.fillText("Disqualifications:" + loses,0,16)
+   //draw ball if on the screen
    if (cannonballOnScreen)
    { 
-      context.fillStyle = "gray";
+      context.fillStyle = "black";
       context.beginPath();
       context.arc(cannonball.x, cannonball.y, cannonballRadius, 
          0, Math.PI * 2);
       context.closePath();
       context.fill();
    } // end if
-
-   // draw the cannon barrel
-   context.beginPath(); // begin a new path
-   context.strokeStyle = "black";
-   context.moveTo(0, canvasHeight / 2); // path origin
-   context.lineTo(barrelEnd.x, barrelEnd.y); 
-   context.lineWidth = lineWidth; // line width
-   context.stroke(); //draw path
-
-   // draw the cannon base
+   var img = new Image();
+   img.src = "chicken.png";
+   img.onload = function() {
+      chickenArray.forEach(element => {
+         if (element.dead == 0){
+            context.drawImage(img, element.width, element.height, canvas.width / 20, canvas.height / 20);
+         }
+      })
+  };
+  enemyCanonBall.forEach(element =>{
+   context.fillStyle = "red";
    context.beginPath();
-   context.fillStyle = "gray";
-   context.arc(0, canvasHeight / 2, cannonBaseRadius, 0, Math.PI * 2);
+   context.arc(element.x, element.y, cannonballRadius, 
+      0, Math.PI * 2);
    context.closePath();
    context.fill();
-
-   // draw the blocker
-   context.beginPath(); // begin a new path
-   context.moveTo(blocker.start.x, blocker.start.y); // path origin
-   context.lineTo(blocker.end.x, blocker.end.y); 
-   context.lineWidth = lineWidth; // line width
-   context.stroke(); //draw path
-
-   // initialize currentPoint to the starting point of the target
-   var currentPoint = new Object();
-   currentPoint.x = target.start.x;
-   currentPoint.y = target.start.y; 
-
-   // draw the target
-   for (var i = 0; i < TARGET_PIECES; ++i)
-   {
-      // if this target piece is not hit, draw it
-      if (!hitStates[i])
-      {
-         context.beginPath(); // begin a new path for target
-
-         // alternate coloring the pieces yellow and blue
-         if (i % 2 === 0)
-            context.strokeStyle = "yellow";
-         else
-            context.strokeStyle = "blue";
-
-         context.moveTo(currentPoint.x, currentPoint.y); // path origin
-         context.lineTo(currentPoint.x, currentPoint.y + pieceLength); 
-         context.lineWidth = lineWidth; // line width
-         context.stroke(); // draw path
-      } // end if
-	 
-      // move currentPoint to the start of the next piece
-      currentPoint.y += pieceLength;
-   } // end for
+  })
+  var img1 = new Image();
+  img1.src = "player.png"
+  context.drawImage(img1, player.width, player.height, canvas.width / 20, canvas.height / 20);
 } // end function draw
 
+function gameOver(){
+   stopTimer()
+   var currLocation;
+   var lowest = true;
+   highScoreArray.forEach((element,index) => {
+      if(element < points){
+         currLocation = index + 1
+         highScoreArray.splice(index,0,points)
+         lowest = false;
+      }
+   }) 
+   if(highScoreArray.length == 0 || lowest){
+      highScoreArray.push(points)
+      currLocation = highScoreArray.length
+   }
+   let listOfScores = document.getElementById("myList")
+   while (listOfScores.firstChild) {
+      listOfScores.removeChild(listOfScores.firstChild);
+   }
+   let newItem = document.createElement("li");
+   let textNode = document.createTextNode("place : points");
+   newItem.appendChild(textNode);
+   listOfScores.appendChild(newItem);
+   highScoreArray.forEach((element,index) => {
+      let newItem = document.createElement("li");
+      let textNode = document.createTextNode((index+1) + ": " + element);
+      newItem.appendChild(textNode);
+      listOfScores.appendChild(newItem);
+   }) 
+   document.getElementById("curr_location").innerHTML = "your place is:" + currLocation
+   if(points<100){
+      alert("you can do better")
+   }
+   else{
+      let allDead = true;
+      chickenArray.forEach(element => {
+         if (element.dead == 0){
+            allDead = false;
+         }
+      })
+      if(allDead){
+         alert("Champion!")
+      }
+      else{
+         alert("Winnner!")
+      }
+   }
+   document.getElementById("soundTrack").pause();
+   showDiv('highScore_div')
+}
 // display an alert when the game ends
 function showGameOverDialog(message)
 {
